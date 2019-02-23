@@ -15,7 +15,6 @@ import java.util.Iterator;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-
 public class MinimalMouseListenerGUI extends JPanel implements MouseListener, MouseMotionListener {
 
 	// These variables will store the mouse coordinates
@@ -83,27 +82,20 @@ public class MinimalMouseListenerGUI extends JPanel implements MouseListener, Mo
 		// Set the size, arrange components, and display the frame.
 		frame.pack();
 		frame.setVisible(true);
-		
 	}
 
-	
 	@Override
 	public void mousePressed(MouseEvent arg0) {
-		// TODO Auto-generated method stub\
 	}
+	
 	@Override
-	public void mouseReleased(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
+	public void mouseReleased(MouseEvent arg0) {		
 	}
-
 
 	@Override
 	public void mouseDragged(MouseEvent arg0) {
 		// Empty - do nothing on drag :)
-		
 	}
-
 
 	@Override
 	public void mouseMoved(MouseEvent arg0) {	
@@ -118,7 +110,6 @@ public class MinimalMouseListenerGUI extends JPanel implements MouseListener, Mo
 		colors.add(new Color(r,g1,b));
 		
 		repaint();
-		
 	}
 
 	@Override
@@ -126,23 +117,16 @@ public class MinimalMouseListenerGUI extends JPanel implements MouseListener, Mo
 		// clear points when mouse is clicked
 		points.clear();
 		colors.clear();
-		
 		repaint();
 	}
 
 	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+	public void mouseEntered(MouseEvent e) {		
 	}
 
 	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+	public void mouseExited(MouseEvent e) {		
 	}
-
-
 
 }
 
