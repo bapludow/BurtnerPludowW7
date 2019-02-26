@@ -37,7 +37,7 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
 	
 	private int x=0,y=0; // variables to store mouse coordinates
 	private String n="."; // POI names will be stored here
-	private int snapBuffer = 10; // distance from POI to snap path or display name
+	private int snapBuffer = 15; // distance from POI to snap path or display name
 	
 	private ArrayList<POI> pois = new ArrayList<POI>();
 	private Polyline path = new Polyline();
@@ -101,8 +101,15 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
         }
 
         for (int i = 0; i < pois.size(); i++) {
+        	int radius = 4;
         	g2d.setColor(Color.black);
-        	g2d.fillOval((int)pois.get(i).getX(), (int)pois.get(i).getY(), 10, 10);
+        	g2d.fillOval((int)pois.get(i).getX()-radius, (int)pois.get(i).getY()-radius, radius*2, radius*2);
+        	for (int j = 0; j < path.getPointCount(); j++) {
+        		if(pois.get(i).getX() == path.get(j).getX() &&
+        				pois.get(i).getY() == path.get(j).getY()) {
+        			g2d.drawString(pois.get(i).getName(), (int)pois.get(i).getX()-radius*2, (int)pois.get(i).getY()-radius*2);
+        		}
+			}
         }   
 	}
 	
@@ -183,7 +190,14 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
 		}
 		
 		if(drawPath == true) {
-			path.add(new Point(x,y));
+			Point pathPoint = new Point(x,y);
+			for (int i = 0; i < pois.size(); i++) {
+				if(pathPoint.distance(pois.get(i)) <= snapBuffer) {
+					pathPoint.setX(pois.get(i).getX());
+					pathPoint.setY(pois.get(i).getY());
+				}
+			}
+			path.add(pathPoint);
 		}
 		
 		repaint();
