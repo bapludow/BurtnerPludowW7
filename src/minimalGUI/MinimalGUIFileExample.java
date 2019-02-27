@@ -1,15 +1,13 @@
 /* Notes/to do:
- * - how to move where buttons are placed?
- * - add way for user to type in POI name
- * - change to radio buttons
+ * - change to radio buttons?
  * - add button for checking names/renaming
- * - change POIs to point buffer?
  */
 
 package minimalGUI;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -26,10 +24,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 
 public class MinimalGUIFileExample extends JPanel implements MouseListener, MouseMotionListener, ActionListener {
 
@@ -39,14 +39,16 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
 	
 	private int x=0,y=0; // variables to store mouse coordinates
 	private String n="."; // POI names will be stored here
-	private int snapBuffer = 15; // distance from POI to snap path or display name
+	private int snapBuffer = 10; // distance from POI to snap path or display name
 	
 	private ArrayList<POI> pois = new ArrayList<POI>();
 	private Polyline path = new Polyline();
 	
+	// Create the buttons
+	private JButton pathResetButton = new JButton("Reset the path");	
 	private JButton poiButton = new JButton("POI entry mode");
 	private JButton pathButton = new JButton("Draw a path");
-	private JButton pathResetButton = new JButton("Reset the path");
+	private JButton checkNameButton = new JButton("Check POI names");
 
 	private boolean drawPOI = true;
 	private boolean drawPath = false;
@@ -56,7 +58,8 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
 	public MinimalGUIFileExample() {
 		super(true); // enable DoubleBuffering to avoid flickering		
 		setPreferredSize(new Dimension(699,500)); // Set the (preferred) size of the panel
-		add(poiButton);
+		
+		add(poiButton, "South");
 		add(pathButton);
 		add(pathResetButton);
 	}
@@ -66,9 +69,9 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
         super.paintComponent(g);    // Paints all other stuff, e.g., background
         
         // All you need to draw the image is the instance of the BufferedImage class.
-        g.drawImage(campus, 0, 0, this);
+        g.drawImage(campus, 0, 54, this);
     	
-        g.drawString(text.toString(),50, 460);
+        //g.drawString(text.toString(),50, 460);
         
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(
@@ -76,18 +79,11 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
             RenderingHints.VALUE_ANTIALIAS_ON);
 
         g2d.setColor(Color.black);
-        g2d.drawString("Mouse coordinates: "+x+", "+y, 15, 30);
         
         // draw in path if that is turned on
         if(drawPath) {
         	int radius = 5;
         	g2d.setColor(Color.red);
-        	
-        	//Point lastPt = new Point();
-    		//lastPt = path.get(path.getPointCount()-1);
-    		//if (lastPt.distance(path.get(0)) <= snapBuffer) {
-    		//	path.set((path.getPointCount()-1), path.get(0));
-    		//}
         	
         	for (int i = 0; i < path.getPointCount()-1; i++) {
         		g.drawLine(
@@ -105,14 +101,12 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
         for (int i = 0; i < pois.size(); i++) {
         	int radius = 4;
         	g2d.setColor(Color.black);
-        	g2d.fillOval((int)pois.get(i).getX()-radius, (int)pois.get(i).getY()-radius, radius*2, radius*2);
-        	for (int j = 0; j < path.getPointCount(); j++) {
-        		if(pois.get(i).getX() == path.get(j).getX() &&
-        				pois.get(i).getY() == path.get(j).getY()) {
-        			g2d.drawString(pois.get(i).getName(), (int)pois.get(i).getX()-radius*2, (int)pois.get(i).getY()-radius*2);
-        		}
-			}
-        }   
+        	g2d.setFont(new Font("default", Font.BOLD, 14));
+        	g2d.fillOval((int)pois.get(i).getCenter().getX()-radius, (int)pois.get(i).getCenter().getY()-radius, radius*2, radius*2);
+        	if(pois.get(i).isVisited()) {
+    			g2d.drawString(pois.get(i).getName(), (int)pois.get(i).getCenter().getX()-radius*2, (int)pois.get(i).getCenter().getY()-radius*2);
+        	}
+        }
 	}
 	
 	// throws IOException tells Java that this method may result in an error
@@ -127,6 +121,7 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
 		gui.poiButton.addActionListener(gui);
 		gui.pathButton.addActionListener(gui);
 		gui.pathResetButton.addActionListener(gui);
+		gui.checkNameButton.addActionListener(gui);
 		gui.addMouseListener(gui);
 		gui.addMouseMotionListener(gui);
 		
@@ -168,48 +163,29 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
         }
 	}
 	
-	// OVERRIDES FOR DAYS
+	// OVERRIDES WE USE
 	@Override
-	public void mousePressed(MouseEvent arg0) {}
-	
-	@Override
-	public void mouseReleased(MouseEvent arg0) {}		
+	public void mouseReleased(MouseEvent arg0) {  
+		Point temp = new Point(arg0.getX(), arg0.getY());
 
-	@Override
-	public void mouseDragged(MouseEvent arg0) {}
-
-	@Override
-	public void mouseMoved(MouseEvent arg0) {}
-
-	@Override
-	public void mouseClicked(MouseEvent arg0) { // Save the mouse coordinates in the member variables x and y 
-		x =  arg0.getX();
-		y =  arg0.getY();
-		
 		if(drawPOI == true) {
-			n = Integer.toString(pois.size()); // need to make this a way that user can type a name
-			pois.add(new POI(x, y, n));
+			String name = JOptionPane.showInputDialog("Enter POI name: ");
+			pois.add(new POI(temp, snapBuffer, name, false));
 		}
 		
 		if(drawPath == true) {
-			Point pathPoint = new Point(x,y);
 			for (int i = 0; i < pois.size(); i++) {
-				if(pathPoint.distance(pois.get(i)) <= snapBuffer) {
-					pathPoint.setX(pois.get(i).getX());
-					pathPoint.setY(pois.get(i).getY());
+				if(temp.distance(pois.get(i).getCenter()) <= snapBuffer) {
+					temp.setX(pois.get(i).getCenter().getX());
+					temp.setY(pois.get(i).getCenter().getY());
+					pois.get(i).setVisited(true);
 				}
 			}
-			path.add(pathPoint);
+			path.add(temp);
 		}
 		
 		repaint();
 	}
-
-	@Override
-	public void mouseEntered(MouseEvent e) {}
-
-	@Override
-	public void mouseExited(MouseEvent e) {}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -229,8 +205,30 @@ public class MinimalGUIFileExample extends JPanel implements MouseListener, Mous
 		
 		if(e.getSource() == pathResetButton) {
 			path.clear();
+			for (int i = 0; i < pois.size(); i++) {
+				pois.get(i).setVisited(false);
+			}
 			repaint();
 		}	
 	}
+
+	// OVERRIDES WE NEED TO INCLUDE BUT DON'T USE
+	@Override
+	public void mousePressed(MouseEvent arg0) {}
+	
+	@Override
+	public void mouseClicked(MouseEvent arg0) {}		
+
+	@Override
+	public void mouseDragged(MouseEvent arg0) {}
+
+	@Override
+	public void mouseMoved(MouseEvent arg0) {}
+	
+	@Override
+	public void mouseExited(MouseEvent e) {}	
+	
+	@Override
+	public void mouseEntered(MouseEvent e) {}
 	
 }
